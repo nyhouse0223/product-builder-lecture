@@ -187,6 +187,23 @@
 
     .nav-icon { font-size: 1rem; }
 
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      color: var(--subtext);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      background: var(--surface-soft);
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .theme-icon { font-size: 1rem; }
+
     h1 {
       margin: 0;
       font-size: clamp(1.9rem, 5.5vw, 2.8rem);
@@ -346,8 +363,6 @@
         padding: 7px 12px;
         font-size: 0.78rem;
       }
-      /* 좁은 화면에서는 테마 버튼을 아이콘만 남겨 세 개가 한 줄에 들어가게 한다. */
-      #themeLabel { display: none; }
       .contact-card { border-radius: 25px; }
       .field-row { grid-template-columns: 1fr; }
     }
@@ -368,15 +383,15 @@
       <span>행운의 번호</span>
     </a>
 
+    <a class="nav-button" href="ai.html">
+      <span class="nav-icon">🎨</span>
+      <span>AI 행운 컬러</span>
+    </a>
+
     <a class="nav-button" href="contact.html" aria-current="page">
       <span class="nav-icon">📩</span>
       <span>제휴 문의</span>
     </a>
-
-    <button class="nav-button" id="themeToggle" type="button" aria-pressed="false">
-      <span class="nav-icon" id="themeIcon">🌙</span>
-      <span id="themeLabel">다크 모드</span>
-    </button>
   </nav>
 
   <main class="container">
@@ -386,6 +401,11 @@
           <span class="sparkle">✦</span>
           PARTNERSHIP
         </div>
+
+        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+          <span class="theme-icon" id="themeIcon">🌙</span>
+          <span id="themeLabel">다크 모드</span>
+        </button>
       </div>
 
       <h1>제휴 문의</h1>

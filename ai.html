@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="사진을 올리면 AI가 대표 색상을 분석해 로또 번호를 추천하는 페이지" />
+  <meta name="color-scheme" content="dark light" />
+  <title>AI 행운 컬러 번호 추천</title>
+
+  <script>
+    // 첫 페인트 전에 테마를 결정해 화면 깜빡임을 막는다.
+    (function () {
+      let storedTheme = null;
+
+      try {
+        storedTheme = localStorage.getItem("theme");
+      } catch (error) {
+        storedTheme = null;
+      }
+
+      const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      document.documentElement.dataset.theme = storedTheme || (prefersLight ? "light" : "dark");
+    })();
+  </script>
+
+  <style>
+    :root {
+      --bg-start: #10172a;
+      --bg-end: #251447;
+      --glow-warm: rgba(255, 209, 102, 0.14);
+      --glow-cool: rgba(106, 95, 255, 0.22);
+      --shape-warm: #ffd166;
+      --shape-cool: #7c6cff;
+      --shape-opacity: 0.28;
+      --card: rgba(255, 255, 255, 0.1);
+      --card-border: rgba(255, 255, 255, 0.16);
+      --surface-soft: rgba(255, 255, 255, 0.07);
+      --surface-sunken: rgba(8, 11, 28, 0.26);
+      --surface-row: rgba(3, 6, 18, 0.23);
+      --border-soft: rgba(255, 255, 255, 0.12);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --text: #ffffff;
+      --subtext: #cfd4e4;
+      --strong: #ffffff;
+      --muted: rgba(255, 255, 255, 0.5);
+      --placeholder: rgba(255, 255, 255, 0.58);
+      --badge-text: #fff4c8;
+      --primary: #ffd166;
+      --primary-dark: #f5b942;
+      --primary-glow: rgba(245, 185, 66, 0.24);
+      --toast-bg: rgba(8, 10, 23, 0.9);
+      --toast-text: #ffffff;
+      --nav-bg: rgba(22, 30, 52, 0.82);
+      --danger: #ff9a9a;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
+    }
+
+    :root[data-theme="light"] {
+      --bg-start: #f3f6fd;
+      --bg-end: #e6e9f8;
+      --glow-warm: rgba(255, 193, 61, 0.2);
+      --glow-cool: rgba(124, 108, 255, 0.16);
+      --shape-warm: #ffcf5c;
+      --shape-cool: #a89bff;
+      --shape-opacity: 0.3;
+      --card: rgba(255, 255, 255, 0.74);
+      --card-border: rgba(23, 32, 62, 0.1);
+      --surface-soft: rgba(255, 255, 255, 0.62);
+      --surface-sunken: rgba(255, 255, 255, 0.66);
+      --surface-row: rgba(255, 255, 255, 0.72);
+      --border-soft: rgba(23, 32, 62, 0.09);
+      --border-strong: rgba(23, 32, 62, 0.13);
+      --text: #16203c;
+      --subtext: #4d5878;
+      --strong: #16203c;
+      --muted: rgba(22, 32, 60, 0.55);
+      --placeholder: rgba(22, 32, 60, 0.5);
+      --badge-text: #8a5d00;
+      --primary: #ffc93d;
+      --primary-dark: #f0a91c;
+      --primary-glow: rgba(240, 169, 28, 0.28);
+      --toast-bg: rgba(22, 32, 60, 0.92);
+      --toast-text: #ffffff;
+      --nav-bg: rgba(255, 255, 255, 0.86);
+      --danger: #b3352f;
+      --shadow: 0 24px 60px rgba(23, 32, 62, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    [hidden] { display: none !important; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      /* 상단 여백은 고정 네비게이션 바가 콘텐츠를 가리지 않도록 확보한다. */
+      padding: 84px 24px 24px;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, var(--glow-warm), transparent 24%),
+        radial-gradient(circle at 85% 80%, var(--glow-cool), transparent 26%),
+        linear-gradient(145deg, var(--bg-start), var(--bg-end));
+      font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: hidden;
+      transition: color 0.3s ease;
+    }
+
+    .background-shape {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(2px);
+      opacity: var(--shape-opacity);
+      pointer-events: none;
+      animation: float 7s ease-in-out infinite;
+    }
+
+    .shape-one {
+      width: 170px;
+      height: 170px;
+      top: 8%;
+      left: 8%;
+      background: var(--shape-warm);
+    }
+
+    .shape-two {
+      width: 220px;
+      height: 220px;
+      right: 6%;
+      bottom: 8%;
+      background: var(--shape-cool);
+      animation-delay: -2.5s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-18px) rotate(7deg); }
+    }
+
+    /* 스크롤과 무관하게 화면 우측 상단에 계속 떠 있는 메뉴 */
+    .top-nav {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .nav-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: auto;
+      padding: 9px 15px;
+      color: var(--subtext);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      background: var(--nav-bg);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+      backdrop-filter: blur(14px);
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform 0.18s ease, color 0.18s ease, background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-button:hover {
+      transform: translateY(-2px);
+      color: var(--strong);
+    }
+
+    .nav-button:active { transform: translateY(0); }
+
+    .nav-button[aria-current="page"] {
+      color: #2e2100;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 10px 24px var(--primary-glow);
+    }
+
+    .nav-button[aria-current="page"]:hover { color: #2e2100; }
+
+    .nav-icon { font-size: 1rem; }
+
+    .container {
+      width: min(100%, 720px);
+      position: relative;
+      z-index: 1;
+    }
+
+    .lotto-card {
+      padding: clamp(28px, 6vw, 56px);
+      border: 1px solid var(--card-border);
+      border-radius: 32px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      text-align: center;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      color: var(--badge-text);
+      background: var(--surface-soft);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .sparkle { color: var(--primary); }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: auto;
+      padding: 8px 14px;
+      color: var(--subtext);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      background: var(--surface-soft);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .theme-icon { font-size: 1rem; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6.4vw, 3.8rem);
+      line-height: 1.1;
+      letter-spacing: -0.05em;
+    }
+
+    .description {
+      max-width: 540px;
+      margin: 18px auto 0;
+      color: var(--subtext);
+      font-size: 1rem;
+      line-height: 1.75;
+      word-break: keep-all;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .ai-upload {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    button {
+      min-height: 54px;
+      border: 0;
+      border-radius: 16px;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    button:hover { transform: translateY(-2px); }
+    button:active { transform: translateY(0); }
+
+    .upload-button {
+      display: grid;
+      place-items: center;
+      min-height: 54px;
+      padding: 0 24px;
+      border-radius: 16px;
+      color: #2e2100;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 15px 30px var(--primary-glow);
+      font-weight: 900;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.18s ease;
+    }
+
+    .upload-button:hover { transform: translateY(-2px); }
+    .upload-button:active { transform: translateY(0); }
+
+    #imageInput:focus-visible + .upload-button {
+      outline: 2px solid var(--primary);
+      outline-offset: 3px;
+    }
+
+    .reset-button {
+      min-width: 106px;
+      padding: 0 18px;
+      color: var(--strong);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      background: var(--surface-soft);
+    }
+
+    .ai-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin: 16px 0 0;
+      color: var(--subtext);
+      font-size: 0.89rem;
+      font-weight: 700;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    .ai-status.error { color: var(--danger); }
+
+    .spinner {
+      width: 15px;
+      height: 15px;
+      flex: none;
+      border: 2px solid var(--border-strong);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ai-result {
+      display: grid;
+      grid-template-columns: 128px 1fr;
+      align-items: center;
+      gap: 18px;
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      background: var(--surface-sunken);
+      text-align: left;
+    }
+
+    .preview {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      object-fit: cover;
+    }
+
+    .verdict-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.79rem;
+      font-weight: 800;
+    }
+
+    .verdict-color {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 7px 0 0;
+      font-size: clamp(1.3rem, 5vw, 1.6rem);
+      font-weight: 900;
+      letter-spacing: -0.035em;
+    }
+
+    .verdict-korean {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .color-dot {
+      width: 18px;
+      height: 18px;
+      flex: none;
+      border-radius: 50%;
+      box-shadow: inset 0 -3px 7px rgba(0, 0, 0, 0.18);
+    }
+
+    .verdict-confidence {
+      margin: 5px 0 0;
+      color: var(--subtext);
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .verdict-range {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .score-list {
+      display: grid;
+      gap: 9px;
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .score-item {
+      display: grid;
+      grid-template-columns: 74px 1fr 50px;
+      align-items: center;
+      gap: 10px;
+      color: var(--subtext);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .score-item.top { color: var(--strong); font-weight: 900; }
+
+    .score-name {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .score-name .color-dot { width: 11px; height: 11px; }
+
+    .score-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: var(--surface-row);
+      overflow: hidden;
+    }
+
+    .score-fill {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.5s ease;
+    }
+
+    .score-value {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .number-area {
+      min-height: 126px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 24px 0 30px;
+      padding: 24px;
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      background: var(--surface-sunken);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .numbers {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 13px;
+    }
+
+    .ball {
+      width: clamp(54px, 11vw, 68px);
+      height: clamp(54px, 11vw, 68px);
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      font-size: clamp(1.15rem, 4vw, 1.45rem);
+      font-weight: 900;
+      box-shadow: inset 0 -5px 12px rgba(0, 0, 0, 0.16), 0 10px 18px rgba(0, 0, 0, 0.2);
+      transform: scale(0);
+      animation: pop 0.42s cubic-bezier(.2, .85, .32, 1.35) forwards;
+    }
+
+    @keyframes pop { to { transform: scale(1); } }
+
+    .placeholder {
+      color: var(--placeholder);
+      font-weight: 700;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    .redraw-button {
+      padding: 0 24px;
+      color: #2e2100;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 15px 30px var(--primary-glow);
+    }
+
+    .copy-button {
+      min-width: 106px;
+      padding: 0 18px;
+      color: var(--strong);
+      border: 1px solid var(--border-strong);
+      background: var(--surface-soft);
+    }
+
+    .redraw-button:disabled,
+    .copy-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .notice {
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      z-index: 30;
+      padding: 12px 17px;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      color: var(--toast-text);
+      background: var(--toast-bg);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      opacity: 0;
+      transform: translate(-50%, 18px);
+      pointer-events: none;
+      transition: 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 68px 14px 14px; }
+      .top-nav {
+        top: 11px;
+        right: 11px;
+        left: 11px;
+        gap: 6px;
+      }
+      .nav-button {
+        padding: 7px 12px;
+        font-size: 0.78rem;
+      }
+      .lotto-card { border-radius: 25px; }
+      .card-header { justify-content: center; }
+      .ai-upload { grid-template-columns: 1fr; }
+      .reset-button { width: 100%; }
+      .ai-result {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+      .preview-wrap { width: min(100%, 190px); }
+      .verdict-color { justify-content: center; }
+      .score-item { grid-template-columns: 68px 1fr 46px; }
+      .number-area { padding: 20px 13px; }
+      .numbers { gap: 9px; }
+      .controls { grid-template-columns: 1fr; }
+      .copy-button { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="background-shape shape-one"></div>
+  <div class="background-shape shape-two"></div>
+
+  <nav class="top-nav" aria-label="주요 메뉴">
+    <a class="nav-button" href="index.html">
+      <span class="nav-icon">🍀</span>
+      <span>행운의 번호</span>
+    </a>
+
+    <a class="nav-button" href="ai.html" aria-current="page">
+      <span class="nav-icon">🎨</span>
+      <span>AI 행운 컬러</span>
+    </a>
+
+    <a class="nav-button" href="contact.html">
+      <span class="nav-icon">📩</span>
+      <span>제휴 문의</span>
+    </a>
+  </nav>
+
+  <main class="container">
+    <section class="lotto-card">
+      <div class="card-header">
+        <div class="badge">
+          <span class="sparkle">✦</span>
+          AI COLOR PICKER
+        </div>
+
+        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+          <span class="theme-icon" id="themeIcon">🌙</span>
+          <span id="themeLabel">다크 모드</span>
+        </button>
+      </div>
+
+      <h1>AI 행운 컬러</h1>
+
+      <p class="description">
+        사진을 올리면 AI가 대표 색상을 분석해요.<br />
+        그 색과 연결된 번호 구간에서 반드시 2개가 포함된 조합을 만들어드립니다.
+      </p>
+
+      <div class="ai-upload">
+        <input class="visually-hidden" type="file" id="imageInput" accept="image/*" />
+        <label class="upload-button" for="imageInput">📁 이미지 파일 선택</label>
+
+        <button class="reset-button" id="aiResetButton" type="button" hidden>초기화</button>
+      </div>
+
+      <p class="ai-status" id="aiStatus" role="status" aria-live="polite" hidden></p>
+
+      <div class="ai-result" id="aiResult" hidden>
+        <div class="preview-wrap">
+          <img class="preview" id="previewImage" alt="업로드한 이미지 미리보기" />
+        </div>
+
+        <div class="verdict">
+          <p class="verdict-label">AI가 분석한 오늘의 행운 컬러</p>
+
+          <p class="verdict-color">
+            <span class="color-dot" id="colorDot"></span>
+            <span id="colorName">-</span>
+            <span class="verdict-korean" id="colorKorean"></span>
+          </p>
+
+          <p class="verdict-confidence" id="verdictConfidence"></p>
+          <p class="verdict-range" id="verdictRange"></p>
+        </div>
+      </div>
+
+      <ul class="score-list" id="scoreList" hidden></ul>
+
+      <div class="number-area" id="numberArea" aria-live="polite">
+        <div class="numbers" id="numbers">
+          <span class="placeholder">사진을 올리면 번호를 뽑아드려요.</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="redraw-button" id="redrawButton" type="button" disabled>
+          🎲 같은 색으로 다시 뽑기
+        </button>
+
+        <button class="copy-button" id="copyButton" type="button" disabled>
+          번호 복사
+        </button>
+      </div>
+
+      <p class="notice">
+        AI 분석 결과와 무관하게 당첨을 보장하지 않습니다.
+      </p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status">번호를 복사했습니다.</div>
+
+  <script>
+    const MODEL_BASE_URL = "https://teachablemachine.withgoogle.com/models/jFhw2WqNc/";
+    const TFJS_URL = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js";
+    const TM_IMAGE_URL = "https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js";
+
+    // 색상 구간은 index.html의 공 색상 구간과 정확히 같다.
+    const COLOR_META = {
+      Yellow: { hex: "#f3b61f", korean: "노란색", min: 1, max: 10 },
+      Blue: { hex: "#4d95e8", korean: "파란색", min: 11, max: 20 },
+      Red: { hex: "#ed6262", korean: "빨간색", min: 21, max: 30 },
+      Gray: { hex: "#7d8189", korean: "회색", min: 31, max: 40 },
+      Green: { hex: "#48a76a", korean: "초록색", min: 41, max: 45 }
+    };
+
+    // 이 모델은 클래스 라벨이 한글이다. 나중에 영문으로 다시 학습해도 동작하도록 둘 다 받는다.
+    const CLASS_ALIASES = {
+      "노란색": "Yellow", "yellow": "Yellow",
+      "파란색": "Blue", "blue": "Blue",
+      "빨간색": "Red", "red": "Red",
+      "회색": "Gray", "gray": "Gray", "grey": "Gray",
+      "초록색": "Green", "green": "Green"
+    };
+
+    const numbersContainer = document.getElementById("numbers");
+    const numberArea = document.getElementById("numberArea");
+    const redrawButton = document.getElementById("redrawButton");
+    const copyButton = document.getElementById("copyButton");
+    const toast = document.getElementById("toast");
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+    const imageInput = document.getElementById("imageInput");
+    const aiResetButton = document.getElementById("aiResetButton");
+    const aiStatus = document.getElementById("aiStatus");
+    const aiResult = document.getElementById("aiResult");
+    const previewImage = document.getElementById("previewImage");
+    const colorDot = document.getElementById("colorDot");
+    const colorName = document.getElementById("colorName");
+    const colorKorean = document.getElementById("colorKorean");
+    const verdictConfidence = document.getElementById("verdictConfidence");
+    const verdictRange = document.getElementById("verdictRange");
+    const scoreList = document.getElementById("scoreList");
+
+    let currentNumbers = [];
+    let currentMeta = null;
+    let model = null;
+    let previewUrl = null;
+    let analyzing = false;
+
+    function applyTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+
+      const isDark = theme === "dark";
+      themeIcon.textContent = isDark ? "🌙" : "☀️";
+      themeLabel.textContent = isDark ? "다크 모드" : "라이트 모드";
+      themeToggle.setAttribute("aria-pressed", String(isDark));
+      themeToggle.setAttribute("aria-label", isDark ? "라이트 모드로 전환" : "다크 모드로 전환");
+
+      try {
+        localStorage.setItem("theme", theme);
+      } catch (error) {
+        // 저장할 수 없어도 화면 전환은 그대로 동작한다.
+      }
+    }
+
+    function getBallColor(number) {
+      if (number <= 10) return "#f3b61f";
+      if (number <= 20) return "#4d95e8";
+      if (number <= 30) return "#ed6262";
+      if (number <= 40) return "#7d8189";
+      return "#48a76a";
+    }
+
+    function renderNumbers(numbers) {
+      numbersContainer.innerHTML = "";
+
+      numbers.forEach((number, index) => {
+        const ball = document.createElement("span");
+        ball.className = "ball";
+        ball.textContent = number;
+        ball.style.background = getBallColor(number);
+        ball.style.animationDelay = `${index * 70}ms`;
+        ball.setAttribute("aria-label", `${number}번`);
+        numbersContainer.appendChild(ball);
+      });
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 1800);
+    }
+
+    function resolveColorKey(className) {
+      const raw = String(className == null ? "" : className).trim();
+      return CLASS_ALIASES[raw] || CLASS_ALIASES[raw.toLowerCase()] || null;
+    }
+
+    function setStatus(message, kind) {
+      if (!message) {
+        aiStatus.hidden = true;
+        aiStatus.textContent = "";
+        return;
+      }
+
+      aiStatus.className = kind ? `ai-status ${kind}` : "ai-status";
+      aiStatus.textContent = "";
+
+      if (kind === "loading") {
+        const spinner = document.createElement("span");
+        spinner.className = "spinner";
+        aiStatus.appendChild(spinner);
+      }
+
+      aiStatus.appendChild(document.createTextNode(message));
+      aiStatus.hidden = false;
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`failed to load ${src}`));
+        document.head.appendChild(script);
+      });
+    }
+
+    // 라이브러리와 모델은 첫 업로드 때만 받는다.
+    async function ensureModel() {
+      if (model) return model;
+
+      if (typeof tmImage === "undefined") {
+        await loadScript(TFJS_URL);
+        await loadScript(TM_IMAGE_URL);
+      }
+
+      if (typeof tmImage === "undefined") throw new Error("teachable machine library missing");
+
+      model = await tmImage.load(`${MODEL_BASE_URL}model.json`, `${MODEL_BASE_URL}metadata.json`);
+      return model;
+    }
+
+    function showPreview(file) {
+      return new Promise((resolve, reject) => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(file);
+
+        previewImage.onload = () => resolve();
+        previewImage.onerror = () => reject(new Error("image decode failed"));
+        previewImage.src = previewUrl;
+      });
+    }
+
+    function pickRandom(pool, count) {
+      const remaining = pool.slice();
+      const picked = [];
+
+      while (picked.length < count && remaining.length > 0) {
+        const index = Math.floor(Math.random() * remaining.length);
+        picked.push(remaining.splice(index, 1)[0]);
+      }
+
+      return picked;
+    }
+
+    // 색상 구간에서 2개 + 나머지 전체에서 4개, 중복 없이 뽑아 오름차순으로 돌려준다.
+    function createColorLottoNumbers(meta) {
+      const rangePool = [];
+      for (let number = meta.min; number <= meta.max; number++) rangePool.push(number);
+
+      const fromRange = pickRandom(rangePool, 2);
+      const chosen = new Set(fromRange);
+
+      const restPool = [];
+      for (let number = 1; number <= 45; number++) {
+        if (!chosen.has(number)) restPool.push(number);
+      }
+
+      return fromRange.concat(pickRandom(restPool, 4)).sort((a, b) => a - b);
+    }
+
+    function drawForColor(meta) {
+      currentNumbers = createColorLottoNumbers(meta);
+      renderNumbers(currentNumbers);
+      copyButton.disabled = false;
+      redrawButton.disabled = false;
+    }
+
+    function renderScores(predictions) {
+      scoreList.innerHTML = "";
+
+      predictions.forEach((prediction, index) => {
+        const key = resolveColorKey(prediction.className);
+        const meta = key ? COLOR_META[key] : null;
+        const percent = (prediction.probability * 100).toFixed(1);
+
+        const item = document.createElement("li");
+        item.className = index === 0 ? "score-item top" : "score-item";
+
+        const name = document.createElement("span");
+        name.className = "score-name";
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        dot.style.background = meta ? meta.hex : "var(--muted)";
+        name.append(dot, document.createTextNode(key || prediction.className));
+
+        const bar = document.createElement("span");
+        bar.className = "score-bar";
+        const fill = document.createElement("span");
+        fill.className = "score-fill";
+        fill.style.width = `${percent}%`;
+        fill.style.background = meta ? meta.hex : "var(--muted)";
+        bar.appendChild(fill);
+
+        const value = document.createElement("span");
+        value.className = "score-value";
+        value.textContent = `${percent}%`;
+
+        item.append(name, bar, value);
+        scoreList.appendChild(item);
+      });
+
+      scoreList.hidden = false;
+    }
+
+    function resetAi() {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
+
+      previewImage.removeAttribute("src");
+      imageInput.value = "";
+      aiResult.hidden = true;
+      scoreList.hidden = true;
+      aiResetButton.hidden = true;
+      setStatus("");
+
+      currentNumbers = [];
+      currentMeta = null;
+      copyButton.disabled = true;
+      redrawButton.disabled = true;
+
+      numbersContainer.innerHTML = "";
+      const placeholder = document.createElement("span");
+      placeholder.className = "placeholder";
+      placeholder.textContent = "사진을 올리면 번호를 뽑아드려요.";
+      numbersContainer.appendChild(placeholder);
+    }
+
+    async function analyzeImage(file) {
+      if (analyzing) return;
+
+      if (!file) {
+        setStatus("이미지를 선택해주세요.", "error");
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        setStatus("이미지 파일만 분석할 수 있어요. 다른 파일을 선택해주세요.", "error");
+        return;
+      }
+
+      analyzing = true;
+      aiResult.hidden = true;
+      scoreList.hidden = true;
+      aiResetButton.hidden = false;
+
+      try {
+        await showPreview(file);
+      } catch (error) {
+        setStatus("이미지를 불러오지 못했습니다. 다른 파일로 다시 시도해주세요.", "error");
+        analyzing = false;
+        return;
+      }
+
+      try {
+        setStatus(model ? "AI 분석 중..." : "AI 모델을 불러오는 중...", "loading");
+        await ensureModel();
+      } catch (error) {
+        setStatus("AI 모델을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해주세요.", "error");
+        analyzing = false;
+        return;
+      }
+
+      setStatus("AI 분석 중...", "loading");
+
+      try {
+        const predictions = (await model.predict(previewImage))
+          .slice()
+          .sort((a, b) => b.probability - a.probability);
+
+        if (predictions.length === 0) throw new Error("empty prediction");
+
+        const best = predictions[0];
+        const key = resolveColorKey(best.className);
+        const meta = key ? COLOR_META[key] : null;
+
+        renderScores(predictions);
+
+        if (!meta) {
+          setStatus(`모델이 모르는 클래스(${best.className})를 반환해 번호를 만들지 못했습니다.`, "error");
+          analyzing = false;
+          return;
+        }
+
+        colorDot.style.background = meta.hex;
+        colorName.textContent = key;
+        colorKorean.textContent = meta.korean;
+        verdictConfidence.textContent = `확률 ${(best.probability * 100).toFixed(1)}%`;
+        verdictRange.textContent = `연결 번호 구간 ${meta.min} ~ ${meta.max}`;
+        aiResult.hidden = false;
+
+        currentMeta = meta;
+        drawForColor(meta);
+
+        setStatus(`분석 완료! ${meta.min}~${meta.max} 구간에서 2개를 포함해 번호를 뽑았어요.`);
+        numberArea.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (error) {
+        setStatus("이미지 분석에 실패했습니다. 잠시 후 다시 시도해주세요.", "error");
+      } finally {
+        analyzing = false;
+      }
+    }
+
+    themeToggle.addEventListener("click", () => {
+      applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    });
+
+    imageInput.addEventListener("change", (event) => {
+      const files = event.target.files;
+      analyzeImage(files && files.length > 0 ? files[0] : null);
+    });
+
+    aiResetButton.addEventListener("click", resetAi);
+
+    redrawButton.addEventListener("click", () => {
+      if (!currentMeta) return;
+
+      drawForColor(currentMeta);
+      showToast(`${currentMeta.min}~${currentMeta.max} 구간으로 다시 뽑았어요.`);
+    });
+
+    copyButton.addEventListener("click", async () => {
+      if (currentNumbers.length === 0) return;
+
+      const text = currentNumbers.join(", ");
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("번호를 복사했습니다.");
+      } catch (error) {
+        const temporaryInput = document.createElement("textarea");
+        temporaryInput.value = text;
+        document.body.appendChild(temporaryInput);
+        temporaryInput.select();
+        document.execCommand("copy");
+        temporaryInput.remove();
+        showToast("번호를 복사했습니다.");
+      }
+    });
+
+    applyTheme(document.documentElement.dataset.theme || "dark");
+  </script>
+</body>
+</html>
