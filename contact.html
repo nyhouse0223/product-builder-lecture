@@ -48,6 +48,8 @@
       --danger-bg: rgba(237, 98, 98, 0.14);
       --success: #8fe6b4;
       --success-bg: rgba(72, 167, 106, 0.16);
+      --nav-bg: rgba(22, 30, 52, 0.82);
+      --strong: #ffffff;
       --shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
     }
 
@@ -75,6 +77,8 @@
       --danger-bg: rgba(237, 98, 98, 0.13);
       --success: #1c7a48;
       --success-bg: rgba(72, 167, 106, 0.15);
+      --nav-bg: rgba(255, 255, 255, 0.86);
+      --strong: #16203c;
       --shadow: 0 24px 60px rgba(23, 32, 62, 0.12);
     }
 
@@ -85,7 +89,8 @@
       margin: 0;
       display: grid;
       place-items: center;
-      padding: 24px;
+      /* 상단 여백은 고정 네비게이션 바가 콘텐츠를 가리지 않도록 확보한다. */
+      padding: 84px 24px 24px;
       color: var(--text);
       background:
         radial-gradient(circle at 15% 20%, var(--glow-warm), transparent 24%),
@@ -131,20 +136,56 @@
 
     .sparkle { color: var(--primary); }
 
-    .theme-toggle {
+    /* 스크롤과 무관하게 화면 우측 상단에 계속 떠 있는 메뉴 */
+    .top-nav {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .nav-button {
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      padding: 8px 14px;
+      min-height: auto;
+      padding: 9px 15px;
       color: var(--subtext);
       border: 1px solid var(--border-strong);
       border-radius: 999px;
-      background: var(--surface-soft);
+      background: var(--nav-bg);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+      backdrop-filter: blur(14px);
       font: inherit;
       font-size: 0.84rem;
       font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
       cursor: pointer;
+      transition: transform 0.18s ease, color 0.18s ease, background 0.3s ease, border-color 0.3s ease;
     }
+
+    .nav-button:hover {
+      transform: translateY(-2px);
+      color: var(--strong);
+    }
+
+    .nav-button:active { transform: translateY(0); }
+
+    .nav-button[aria-current="page"] {
+      color: #2e2100;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 10px 24px var(--primary-glow);
+    }
+
+    .nav-button[aria-current="page"]:hover { color: #2e2100; }
+
+    .nav-icon { font-size: 1rem; }
 
     h1 {
       margin: 0;
@@ -293,19 +334,20 @@
       border: 1px solid var(--danger-bg);
     }
 
-    .back-link {
-      display: inline-block;
-      margin-top: 20px;
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .back-link:hover { color: var(--subtext); text-decoration: underline; }
-
     @media (max-width: 560px) {
-      body { padding: 14px; }
+      body { padding: 68px 14px 14px; }
+      .top-nav {
+        top: 11px;
+        right: 11px;
+        left: 11px;
+        gap: 6px;
+      }
+      .nav-button {
+        padding: 7px 12px;
+        font-size: 0.78rem;
+      }
+      /* 좁은 화면에서는 테마 버튼을 아이콘만 남겨 세 개가 한 줄에 들어가게 한다. */
+      #themeLabel { display: none; }
       .contact-card { border-radius: 25px; }
       .field-row { grid-template-columns: 1fr; }
     }
@@ -320,6 +362,23 @@
 </head>
 
 <body>
+  <nav class="top-nav" aria-label="주요 메뉴">
+    <a class="nav-button" href="index.html">
+      <span class="nav-icon">🍀</span>
+      <span>행운의 번호</span>
+    </a>
+
+    <a class="nav-button" href="contact.html" aria-current="page">
+      <span class="nav-icon">📩</span>
+      <span>제휴 문의</span>
+    </a>
+
+    <button class="nav-button" id="themeToggle" type="button" aria-pressed="false">
+      <span class="nav-icon" id="themeIcon">🌙</span>
+      <span id="themeLabel">다크 모드</span>
+    </button>
+  </nav>
+
   <main class="container">
     <section class="contact-card">
       <div class="card-header">
@@ -327,11 +386,6 @@
           <span class="sparkle">✦</span>
           PARTNERSHIP
         </div>
-
-        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
-          <span class="theme-icon" id="themeIcon">🌙</span>
-          <span id="themeLabel">다크 모드</span>
-        </button>
       </div>
 
       <h1>제휴 문의</h1>
@@ -398,7 +452,6 @@
         <p class="status" id="status" role="status" aria-live="polite"></p>
       </form>
 
-      <a class="back-link" href="index.html">← 로또 번호 추천으로 돌아가기</a>
     </section>
   </main>
 
