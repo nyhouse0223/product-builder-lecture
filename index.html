@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="버튼을 눌러 로또 번호를 무작위로 추천받는 웹사이트" />
   <meta name="color-scheme" content="dark light" />
+  <link rel="canonical" href="https://nyhouse0223.github.io/product-builder-lecture/" />
   <title>행운의 로또 번호 추천</title>
 
   <script>
@@ -52,6 +53,8 @@
       --toast-bg: rgba(8, 10, 23, 0.9);
       --toast-text: #ffffff;
       --shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
+      /* Disqus는 부모 배경색을 샘플링해 자체 테마를 정하므로 반투명이 아닌 불투명 색을 쓴다. */
+      --comments-bg: #161d33;
     }
 
     :root[data-theme="light"] {
@@ -82,6 +85,7 @@
       --toast-bg: rgba(22, 32, 60, 0.92);
       --toast-text: #ffffff;
       --shadow: 0 24px 60px rgba(23, 32, 62, 0.12);
+      --comments-bg: #ffffff;
     }
 
     * { box-sizing: border-box; }
@@ -360,6 +364,29 @@
       font-size: 0.86rem;
     }
 
+    .comments {
+      margin-top: 18px;
+      padding: 22px;
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      background: var(--comments-bg);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .comments h2 {
+      margin: 0 0 14px;
+      font-size: 1.02rem;
+      letter-spacing: -0.025em;
+    }
+
+    .comments noscript {
+      display: block;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .comments noscript a { color: var(--primary); }
+
     .site-footer {
       margin: 18px 0 0;
       text-align: center;
@@ -479,6 +506,15 @@
       <ul class="history-list" id="historyList">
         <li class="history-empty">아직 추천 기록이 없습니다.</li>
       </ul>
+    </section>
+
+    <section class="comments">
+      <h2>댓글</h2>
+      <div id="disqus_thread"></div>
+      <noscript>
+        댓글을 보려면 JavaScript를 활성화해주세요.
+        <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+      </noscript>
     </section>
 
     <p class="site-footer">
@@ -631,6 +667,30 @@
     });
 
     applyTheme(document.documentElement.dataset.theme || "dark");
+  </script>
+
+  <script>
+    // Disqus는 URL을 스레드 키로 쓴다. 로컬에서 열거나 주소가 바뀌어도 같은 스레드를
+    // 가리키도록 canonical URL과 고정 identifier를 명시한다.
+    var disqus_config = function () {
+      this.page.url = document.querySelector('link[rel="canonical"]').href;
+      this.page.identifier = "lotto-index";
+    };
+
+    (function () {
+      const d = document;
+      const s = d.createElement("script");
+      s.src = "https://productbuilder-zakfusyh15.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+
+    // Disqus는 로드 시점의 배경색으로 자체 테마를 정하므로, 테마를 바꾸면 다시 그려준다.
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      if (typeof DISQUS === "undefined") return;
+
+      DISQUS.reset({ reload: true, config: disqus_config });
+    });
   </script>
 </body>
 </html>
