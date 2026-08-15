@@ -52,6 +52,7 @@
       --primary-glow: rgba(245, 185, 66, 0.24);
       --toast-bg: rgba(8, 10, 23, 0.9);
       --toast-text: #ffffff;
+      --danger: #ff9a9a;
       --shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
       /* Disqus는 부모 배경색을 샘플링해 자체 테마를 정하므로 반투명이 아닌 불투명 색을 쓴다. */
       --comments-bg: #161d33;
@@ -84,6 +85,7 @@
       --primary-glow: rgba(240, 169, 28, 0.28);
       --toast-bg: rgba(22, 32, 60, 0.92);
       --toast-text: #ffffff;
+      --danger: #b3352f;
       --shadow: 0 24px 60px rgba(23, 32, 62, 0.12);
       --comments-bg: #ffffff;
     }
@@ -297,6 +299,223 @@
       font-size: 0.82rem;
     }
 
+    [hidden] { display: none !important; }
+
+    /* --- AI 행운 컬러: .history와 같은 보조 패널 규격(radius 24 / padding 22)을 따른다 --- */
+    .ai-card {
+      margin-top: 18px;
+      padding: 22px;
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      background: var(--surface-soft);
+      backdrop-filter: blur(14px);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .ai-card h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      letter-spacing: -0.025em;
+    }
+
+    .ai-description {
+      margin: 10px 0 16px;
+      color: var(--subtext);
+      font-size: 0.88rem;
+      line-height: 1.7;
+      word-break: keep-all;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .ai-upload {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    .upload-button {
+      display: grid;
+      place-items: center;
+      min-height: 54px;
+      padding: 0 24px;
+      border-radius: 16px;
+      color: #2e2100;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 15px 30px var(--primary-glow);
+      font-weight: 900;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.18s ease;
+    }
+
+    .upload-button:hover { transform: translateY(-2px); }
+    .upload-button:active { transform: translateY(0); }
+
+    #imageInput:focus-visible + .upload-button {
+      outline: 2px solid var(--primary);
+      outline-offset: 3px;
+    }
+
+    .reset-button {
+      min-width: 106px;
+      padding: 0 18px;
+      color: var(--strong);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      background: var(--surface-soft);
+    }
+
+    .ai-status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 14px 0 0;
+      color: var(--subtext);
+      font-size: 0.87rem;
+      font-weight: 700;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    .ai-status.error { color: var(--danger); }
+
+    .spinner {
+      width: 15px;
+      height: 15px;
+      flex: none;
+      border: 2px solid var(--border-strong);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ai-result {
+      display: grid;
+      grid-template-columns: 128px 1fr;
+      align-items: center;
+      gap: 18px;
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      background: var(--surface-sunken);
+    }
+
+    .preview {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      object-fit: cover;
+    }
+
+    .verdict-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.79rem;
+      font-weight: 800;
+    }
+
+    .verdict-color {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 7px 0 0;
+      font-size: clamp(1.3rem, 5vw, 1.6rem);
+      font-weight: 900;
+      letter-spacing: -0.035em;
+    }
+
+    .verdict-korean {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .color-dot {
+      width: 18px;
+      height: 18px;
+      flex: none;
+      border-radius: 50%;
+      box-shadow: inset 0 -3px 7px rgba(0, 0, 0, 0.18);
+    }
+
+    .verdict-confidence {
+      margin: 5px 0 0;
+      color: var(--subtext);
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .verdict-range {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .score-list {
+      display: grid;
+      gap: 9px;
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .score-item {
+      display: grid;
+      grid-template-columns: 74px 1fr 50px;
+      align-items: center;
+      gap: 10px;
+      color: var(--subtext);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .score-item.top { color: var(--strong); font-weight: 900; }
+
+    .score-name {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .score-name .color-dot { width: 11px; height: 11px; }
+
+    .score-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: var(--surface-row);
+      overflow: hidden;
+    }
+
+    .score-fill {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.5s ease;
+    }
+
+    .score-value {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
     .history {
       margin-top: 18px;
       padding: 22px;
@@ -435,6 +654,16 @@
       .numbers { gap: 9px; }
       .controls { grid-template-columns: 1fr; }
       .copy-button { width: 100%; }
+      .ai-upload { grid-template-columns: 1fr; }
+      .reset-button { width: 100%; min-height: 48px; }
+      .ai-result {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+      .preview-wrap { width: min(100%, 190px); }
+      .verdict-color { justify-content: center; }
+      .score-item { grid-template-columns: 68px 1fr 46px; }
       .history-item {
         align-items: flex-start;
         flex-direction: column;
@@ -476,7 +705,7 @@
         중복 없이 6개를 무작위로 추천해드려요.
       </p>
 
-      <div class="number-area" aria-live="polite">
+      <div class="number-area" id="numberArea" aria-live="polite">
         <div class="numbers" id="numbers">
           <span class="placeholder">버튼을 눌러 번호를 뽑아보세요.</span>
         </div>
@@ -495,6 +724,45 @@
       <p class="notice">
         모든 번호는 동일한 확률로 무작위 생성되며, 당첨을 보장하지 않습니다.
       </p>
+    </section>
+
+    <section class="ai-card">
+      <h2>🎨 AI 행운 컬러로 번호 추천받기</h2>
+
+      <p class="ai-description">
+        사진을 올리면 AI가 대표 색상을 분석해요.
+        그 색과 연결된 번호 구간에서 반드시 2개가 포함된 조합을 만들어드립니다.
+      </p>
+
+      <div class="ai-upload">
+        <input class="visually-hidden" type="file" id="imageInput" accept="image/*" />
+        <label class="upload-button" for="imageInput">📁 이미지 파일 선택</label>
+
+        <button class="reset-button" id="aiResetButton" type="button" hidden>초기화</button>
+      </div>
+
+      <p class="ai-status" id="aiStatus" role="status" aria-live="polite" hidden></p>
+
+      <div class="ai-result" id="aiResult" hidden>
+        <div class="preview-wrap">
+          <img class="preview" id="previewImage" alt="업로드한 이미지 미리보기" />
+        </div>
+
+        <div class="verdict">
+          <p class="verdict-label">AI가 분석한 오늘의 행운 컬러</p>
+
+          <p class="verdict-color">
+            <span class="color-dot" id="colorDot"></span>
+            <span id="colorName">-</span>
+            <span class="verdict-korean" id="colorKorean"></span>
+          </p>
+
+          <p class="verdict-confidence" id="verdictConfidence"></p>
+          <p class="verdict-range" id="verdictRange"></p>
+        </div>
+      </div>
+
+      <ul class="score-list" id="scoreList" hidden></ul>
     </section>
 
     <section class="history">
@@ -598,16 +866,16 @@
         return;
       }
 
-      history.forEach((numbers, index) => {
+      history.forEach((entry, index) => {
         const item = document.createElement("li");
         item.className = "history-item";
 
         const label = document.createElement("span");
-        label.textContent = `${index + 1}번째 추천`;
+        label.textContent = `${index + 1}번째 · ${entry.source}`;
 
         const numberText = document.createElement("span");
         numberText.className = "history-number";
-        numberText.textContent = numbers.join(" · ");
+        numberText.textContent = entry.numbers.join(" · ");
 
         item.append(label, numberText);
         historyList.appendChild(item);
@@ -633,7 +901,7 @@
       currentNumbers = createLottoNumbers();
       renderNumbers(currentNumbers);
 
-      history.unshift(currentNumbers);
+      history.unshift({ numbers: currentNumbers, source: "완전 랜덤" });
       history = history.slice(0, 5);
       renderHistory();
 
@@ -665,6 +933,276 @@
       renderHistory();
       showToast("추천 기록을 지웠습니다.");
     });
+
+    /* ----------------------------- AI 행운 컬러 ----------------------------- */
+
+    const MODEL_BASE_URL = "https://teachablemachine.withgoogle.com/models/jFhw2WqNc/";
+    const TFJS_URL = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js";
+    const TM_IMAGE_URL = "https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js";
+
+    // 색상 구간은 기존 getBallColor()의 공 색상 구간과 정확히 같다.
+    const COLOR_META = {
+      Yellow: { hex: "#f3b61f", korean: "노란색", min: 1, max: 10 },
+      Blue: { hex: "#4d95e8", korean: "파란색", min: 11, max: 20 },
+      Red: { hex: "#ed6262", korean: "빨간색", min: 21, max: 30 },
+      Gray: { hex: "#7d8189", korean: "회색", min: 31, max: 40 },
+      Green: { hex: "#48a76a", korean: "초록색", min: 41, max: 45 }
+    };
+
+    // 이 모델은 클래스 라벨이 한글이다. 나중에 영문으로 다시 학습해도 동작하도록 둘 다 받는다.
+    const CLASS_ALIASES = {
+      "노란색": "Yellow", "yellow": "Yellow",
+      "파란색": "Blue", "blue": "Blue",
+      "빨간색": "Red", "red": "Red",
+      "회색": "Gray", "gray": "Gray", "grey": "Gray",
+      "초록색": "Green", "green": "Green"
+    };
+
+    const imageInput = document.getElementById("imageInput");
+    const aiResetButton = document.getElementById("aiResetButton");
+    const aiStatus = document.getElementById("aiStatus");
+    const aiResult = document.getElementById("aiResult");
+    const previewImage = document.getElementById("previewImage");
+    const colorDot = document.getElementById("colorDot");
+    const colorName = document.getElementById("colorName");
+    const colorKorean = document.getElementById("colorKorean");
+    const verdictConfidence = document.getElementById("verdictConfidence");
+    const verdictRange = document.getElementById("verdictRange");
+    const scoreList = document.getElementById("scoreList");
+    const numberArea = document.getElementById("numberArea");
+
+    let model = null;
+    let previewUrl = null;
+    let analyzing = false;
+
+    function resolveColorKey(className) {
+      const raw = String(className == null ? "" : className).trim();
+      return CLASS_ALIASES[raw] || CLASS_ALIASES[raw.toLowerCase()] || null;
+    }
+
+    function setStatus(message, kind) {
+      if (!message) {
+        aiStatus.hidden = true;
+        aiStatus.textContent = "";
+        return;
+      }
+
+      aiStatus.className = kind ? `ai-status ${kind}` : "ai-status";
+      aiStatus.textContent = "";
+
+      if (kind === "loading") {
+        const spinner = document.createElement("span");
+        spinner.className = "spinner";
+        aiStatus.appendChild(spinner);
+      }
+
+      aiStatus.appendChild(document.createTextNode(message));
+      aiStatus.hidden = false;
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`failed to load ${src}`));
+        document.head.appendChild(script);
+      });
+    }
+
+    // 라이브러리와 모델은 첫 업로드 때만 받는다. 일반 랜덤 추천은 이걸 기다리지 않는다.
+    async function ensureModel() {
+      if (model) return model;
+
+      if (typeof tmImage === "undefined") {
+        await loadScript(TFJS_URL);
+        await loadScript(TM_IMAGE_URL);
+      }
+
+      if (typeof tmImage === "undefined") throw new Error("teachable machine library missing");
+
+      model = await tmImage.load(`${MODEL_BASE_URL}model.json`, `${MODEL_BASE_URL}metadata.json`);
+      return model;
+    }
+
+    function showPreview(file) {
+      return new Promise((resolve, reject) => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(file);
+
+        previewImage.onload = () => resolve();
+        previewImage.onerror = () => reject(new Error("image decode failed"));
+        previewImage.src = previewUrl;
+      });
+    }
+
+    function pickRandom(pool, count) {
+      const remaining = pool.slice();
+      const picked = [];
+
+      while (picked.length < count && remaining.length > 0) {
+        const index = Math.floor(Math.random() * remaining.length);
+        picked.push(remaining.splice(index, 1)[0]);
+      }
+
+      return picked;
+    }
+
+    // 색상 구간에서 2개 + 나머지 전체에서 4개, 중복 없이 뽑아 오름차순으로 돌려준다.
+    function createColorLottoNumbers(meta) {
+      const rangePool = [];
+      for (let number = meta.min; number <= meta.max; number++) rangePool.push(number);
+
+      const fromRange = pickRandom(rangePool, 2);
+      const chosen = new Set(fromRange);
+
+      const restPool = [];
+      for (let number = 1; number <= 45; number++) {
+        if (!chosen.has(number)) restPool.push(number);
+      }
+
+      return fromRange.concat(pickRandom(restPool, 4)).sort((a, b) => a - b);
+    }
+
+    function renderScores(predictions) {
+      scoreList.innerHTML = "";
+
+      predictions.forEach((prediction, index) => {
+        const key = resolveColorKey(prediction.className);
+        const meta = key ? COLOR_META[key] : null;
+        const percent = (prediction.probability * 100).toFixed(1);
+
+        const item = document.createElement("li");
+        item.className = index === 0 ? "score-item top" : "score-item";
+
+        const name = document.createElement("span");
+        name.className = "score-name";
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        dot.style.background = meta ? meta.hex : "var(--muted)";
+        name.append(dot, document.createTextNode(key || prediction.className));
+
+        const bar = document.createElement("span");
+        bar.className = "score-bar";
+        const fill = document.createElement("span");
+        fill.className = "score-fill";
+        fill.style.width = `${percent}%`;
+        fill.style.background = meta ? meta.hex : "var(--muted)";
+        bar.appendChild(fill);
+
+        const value = document.createElement("span");
+        value.className = "score-value";
+        value.textContent = `${percent}%`;
+
+        item.append(name, bar, value);
+        scoreList.appendChild(item);
+      });
+
+      scoreList.hidden = false;
+    }
+
+    function resetAi() {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
+
+      previewImage.removeAttribute("src");
+      imageInput.value = "";
+      aiResult.hidden = true;
+      scoreList.hidden = true;
+      aiResetButton.hidden = true;
+      setStatus("");
+    }
+
+    async function analyzeImage(file) {
+      if (analyzing) return;
+
+      if (!file) {
+        setStatus("이미지를 선택해주세요.", "error");
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        setStatus("이미지 파일만 분석할 수 있어요. 다른 파일을 선택해주세요.", "error");
+        return;
+      }
+
+      analyzing = true;
+      aiResult.hidden = true;
+      scoreList.hidden = true;
+      aiResetButton.hidden = false;
+
+      try {
+        await showPreview(file);
+      } catch (error) {
+        setStatus("이미지를 불러오지 못했습니다. 다른 파일로 다시 시도해주세요.", "error");
+        analyzing = false;
+        return;
+      }
+
+      try {
+        setStatus(model ? "AI 분석 중..." : "AI 모델을 불러오는 중...", "loading");
+        await ensureModel();
+      } catch (error) {
+        setStatus("AI 모델을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해주세요.", "error");
+        analyzing = false;
+        return;
+      }
+
+      setStatus("AI 분석 중...", "loading");
+
+      try {
+        const predictions = (await model.predict(previewImage))
+          .slice()
+          .sort((a, b) => b.probability - a.probability);
+
+        if (predictions.length === 0) throw new Error("empty prediction");
+
+        const best = predictions[0];
+        const key = resolveColorKey(best.className);
+        const meta = key ? COLOR_META[key] : null;
+
+        renderScores(predictions);
+
+        if (!meta) {
+          setStatus(`모델이 모르는 클래스(${best.className})를 반환해 번호를 만들지 못했습니다.`, "error");
+          analyzing = false;
+          return;
+        }
+
+        colorDot.style.background = meta.hex;
+        colorName.textContent = key;
+        colorKorean.textContent = meta.korean;
+        verdictConfidence.textContent = `확률 ${(best.probability * 100).toFixed(1)}%`;
+        verdictRange.textContent = `연결 번호 구간 ${meta.min} ~ ${meta.max}`;
+        aiResult.hidden = false;
+
+        currentNumbers = createColorLottoNumbers(meta);
+        renderNumbers(currentNumbers);
+
+        history.unshift({ numbers: currentNumbers, source: `AI · ${key}` });
+        history = history.slice(0, 5);
+        renderHistory();
+
+        copyButton.disabled = false;
+        generateButton.textContent = "🎲 다시 추천받기";
+
+        setStatus(`분석 완료! ${meta.min}~${meta.max} 구간에서 2개를 포함해 번호를 뽑았어요.`);
+        numberArea.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (error) {
+        setStatus("이미지 분석에 실패했습니다. 잠시 후 다시 시도해주세요.", "error");
+      } finally {
+        analyzing = false;
+      }
+    }
+
+    imageInput.addEventListener("change", (event) => {
+      const files = event.target.files;
+      analyzeImage(files && files.length > 0 ? files[0] : null);
+    });
+
+    aiResetButton.addEventListener("click", resetAi);
 
     applyTheme(document.documentElement.dataset.theme || "dark");
   </script>
